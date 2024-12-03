@@ -1,4 +1,5 @@
 import celery
+from django.shortcuts import render
 import inspect
 from itertools import zip_longest
 import celery.result
@@ -87,13 +88,9 @@ class ExecuteTaskAPIView(GenericAPIView):
                     params = []
                     list_of_params = args.split(",") if args else []
                     if len(list_of_params) > len(signature_params):
-                        return JsonResponse(
-                            {"error": "too much parameters"}, status=400
-                        )
+                        return JsonResponse({"error": "too much parameters"}, status=400)
 
-                    for str_param, param in zip_longest(
-                        list_of_params, signature_params.values()
-                    ):
+                    for str_param, param in zip_longest(list_of_params, signature_params.values()):
                         param_type = param.annotation
                         value = None
                         if str_param is None and param.default is not inspect._empty:
@@ -102,18 +99,14 @@ class ExecuteTaskAPIView(GenericAPIView):
                             try:
                                 value = param_type(str_param)
                             except (TypeError, ValueError):
-                                return JsonResponse(
-                                    {"error": f"bad type of {param.name}"}, status=400
-                                )
+                                return JsonResponse({"error": f"bad type of {param.name}"}, status=400)
                         params.append(value)
                     task_id = str(task.apply_async(params, countdown=countdown))
                     status = "STARTED"
 
                 else:
                     status = "WRONG PARAMETERS"
-                return JsonResponse(
-                    {"task": name, "task_id": task_id, "status": status}
-                )
+                return JsonResponse({"task": name, "task_id": task_id, "status": status})
             else:
                 return JsonResponse({"error": "task not founded"}, status=400)
 
@@ -137,3 +130,16 @@ class CheckTaskStatusAPIView(GenericAPIView):
             return JsonResponse({"result": res})
         else:
             return JsonResponse({"error": "task not founded"}, status=400)
+
+
+def task_list_index(request):
+    tasks = celery.current_app.tasks
+    result = []
+    for key, value in tasks.items():
+        if "celery." in key:
+            continue
+        task = {}
+        task["name"] = key
+        result.append(task)
+
+    return render(template_name="task_list.html")
