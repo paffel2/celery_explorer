@@ -6,11 +6,13 @@ from rest_framework.response import Response
 
 @shared_task
 def test_task():
+    """task description"""
     print("TEST VALUE")
 
 
 @shared_task
 def test_task_with_args(a: int, b: str):
+    """task description"""
     print(f"{a} + {b}")
 
 

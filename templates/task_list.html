@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task manager</title>
+
+</head>
+<body>
+    <h1>Choose task</h1>
+    <form method = "POST"> 
+        {% csrf_token %}
+        {{ form }} 
+        <label>description</label><div id="description"></div>
+        <label>signature</label><div id="signature"></div>
+        <input type = "submit" value = "Submit"> 
+    </form> 
+
+    <script>
+        // Функция для обновления текста в другом элементе
+        async function updateField() {
+            var selectElement = document.getElementById("id_task_name");
+            var selectedValue = selectElement.value;
+            const response = await fetch(`/api/task_explorer/task_detail?name=${selectedValue}`);
+            const data = await response.json();
+            document.getElementById("description").textContent = data.description;
+            document.getElementById("signature").textContent = data.signature;
+        }
+        
+        // Получаем элемент select и добавляем слушатель события
+        var selectElement = document.getElementById("id_task_name");
+        selectElement.addEventListener("change", updateField);
+    </script>
+</body>
+</html>
