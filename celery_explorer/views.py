@@ -147,9 +147,12 @@ def task_index(request):
 
     elif request.method == "POST":
         form = TaskForm(request.POST)
+        context = {}
+        context["form"] = TaskForm()
         if form.is_valid():
             cleaned_data = form.cleaned_data
             name = cleaned_data.get("task_name")
+            context["task_name"] = name
             task = celery.current_app.tasks.get(name)
             if task:
                 task_signature = inspect.signature(task)
@@ -157,15 +160,20 @@ def task_index(request):
                 args = cleaned_data.get("param")
                 countdown = cleaned_data.get("countdown")
                 task_id = None
+                error = True
                 status = "NOT STARTED"
                 if not args and not signature_params:
                     task_id = str(task.apply_async(countdown=countdown))
                     status = "STARTED"
+                    error = False
                 elif signature_params:
                     params = []
                     list_of_params = args.split(",") if args else []
                     if len(list_of_params) > len(signature_params):
-                        return JsonResponse({"error": "too much parameters"}, status=400)
+                        context["status"] = "too much parameters"
+                        context["task_id"] = None
+                        context["error"] = True
+                        return render(request, "task_list.html", context=context)
 
                     for str_param, param in zip_longest(list_of_params, signature_params.values()):
                         param_type = param.annotation
@@ -176,13 +184,22 @@ def task_index(request):
                             try:
                                 value = param_type(str_param)
                             except (TypeError, ValueError):
-                                return JsonResponse({"error": f"bad type of {param.name}"}, status=400)
+                                context["status"] = f"bad type of {param.name}"
+                                context["task_id"] = None
+                                context["error"] = True
+                                return render(request, "task_list.html", context=context)
                         params.append(value)
                     task_id = str(task.apply_async(params, countdown=countdown))
                     status = "STARTED"
-
+                    error = False
                 else:
                     status = "WRONG PARAMETERS"
-                return JsonResponse({"task": name, "task_id": task_id, "status": status})
+                context["status"] = status
+                context["task_id"] = task_id
+                context["error"] = error
+                return render(request, "task_list.html", context=context)
             else:
-                return JsonResponse({"error": "task not founded"}, status=400)
+                context["status"] = "TASK NOT FOUND"
+                context["task_id"] = None
+                context["error"] = True
+                return render(request, "task_list.html", context=context)
