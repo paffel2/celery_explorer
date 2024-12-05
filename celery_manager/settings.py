@@ -38,9 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "task_creator",
-    "rest_framework",
-    "drf_yasg",
     "clearcache",
+    "celery_explorer",
 ]
 
 MIDDLEWARE = [
@@ -121,7 +120,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = "static/"
-STATICFILES_DIRS = ["./celery_explorer/explorer_static"]
+# STATICFILES_DIRS = ["./celery_explorer/explorer_static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
