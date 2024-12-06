@@ -23,6 +23,6 @@ from celery_explorer.views import task_index
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/task_maker/", include("task_creator.urls")),
-    path("api/task_explorer/", include("celery_explorer.urls")),
-    path("explorer/", task_index, name="explorer"),
+    path("celery_explorer/", include("celery_explorer.urls")),
+    # path("celery_explorer/", task_index, name="explorer"),
 ]

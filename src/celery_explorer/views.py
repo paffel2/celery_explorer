@@ -55,7 +55,7 @@ def task_index(request):
             if task:
                 task_signature = inspect.signature(task)
                 signature_params = task_signature.parameters
-                args = cleaned_data.get("param")
+                args = cleaned_data.get("params")
                 countdown = cleaned_data.get("countdown")
                 task_id = None
                 error = True
