@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task manager</title>
+    {% load static %}
+    <link href="{% static 'explorer_static/css/styles.css' %}" rel="stylesheet">
+
+</head>
+<body>
+    <h1>Choose task</h1>
+    <form method="POST">
+        <div class="form-container">
+            <div class="form-left">
+                {% csrf_token %}
+                {{ form }} 
+                <input type="submit" value="Submit">
+                <div class="form-container"><label>Task Name:</label>
+                <div id="task_name">{{task_name}}</div></div>
+                <div class="form-container"><label>Status:</label>
+                <div id="status">{{status}}</div></div>
+                <div class="form-container"><label>TaskID:</label>
+                <div id="task_id">{{task_id}}</div></div>
+                <div class="form-container"><label>Error:</label>
+                <div id="error">{{error}}</div></div>
+                
+            </div>
+            <div class="form-right">
+                <label>Description:</label>
+                <textarea name="description" cols="100" rows="20" id="description" readonly></textarea>
+                <label>Signature:</label>
+                <textarea name="signature" cols="100" rows="20" id="signature" readonly></textarea>
+            </div>
+        </div>
+    </form>
+
+    <script src="{% static 'explorer_static/js/scripts.js' %}"></script>
+</body>
+</html>
