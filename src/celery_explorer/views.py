@@ -16,7 +16,6 @@ def get_task_detail(request, *args, **kwargs):
         if task:
             signature = str(inspect.signature(task))[1:-1]  # delete brackets
             description = inspect.getdoc(task)
-            print(description)
             return JsonResponse({"task": name, "signature": signature, "description": description})
 
     return Http404()
