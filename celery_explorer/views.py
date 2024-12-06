@@ -5,7 +5,7 @@ from django.views.decorators.http import require_GET
 import inspect
 from itertools import zip_longest
 import celery.result
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponseNotFound
 
 
 @require_GET
@@ -16,10 +16,23 @@ def get_task_detail(request, *args, **kwargs):
         if task:
             signature = str(inspect.signature(task))[1:-1]  # delete brackets
             description = inspect.getdoc(task)
-            print(description)
             return JsonResponse({"task": name, "signature": signature, "description": description})
 
-    return Http404()
+    return HttpResponseNotFound()
+
+
+@require_GET
+def get_task_list(request, *args, **kwargs):
+    name = request.GET.get("name")
+    if name:
+        current_app = celery.current_app
+        print(current_app.events)
+        # if task:
+        #    signature = str(inspect.signature(task))[1:-1]  # delete brackets
+        #    description = inspect.getdoc(task)
+        #    return JsonResponse({"task": name, "signature": signature, "description": description})
+
+    return HttpResponseNotFound()
 
 
 @require_GET
@@ -35,7 +48,7 @@ def check_task_status(request, *args, **kwargs):
 def task_index(request):
     from celery_explorer.forms import TaskForm
 
-    template_path = "task_list.html"
+    template_path = "task_explorer.html"
 
     if request.method == "GET":
         form = TaskForm()
@@ -101,3 +114,13 @@ def task_index(request):
                 context["task_id"] = None
                 context["error"] = True
                 return render(request, template_path, context=context)
+
+
+@require_GET
+def tasks_list(request):
+    from celery_explorer.forms import TaskNameForm
+
+    form = TaskNameForm()
+    context = {}
+    context["form"] = form
+    return render(request, "tasks_list.html", context=context)

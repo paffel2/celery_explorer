@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "task_creator",
     "clearcache",
     "celery_explorer",
+    "rest_framework",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
@@ -133,3 +135,4 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_DEFAULT_QUEUE = "default"
 CELERY_TASK_DEFAULT_QUEUE = CELERY_DEFAULT_QUEUE
+CELERY_MANAGER_ENABLED = True

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task manager</title>
+    {% load static %}
+    <link href="{% static 'explorer_static/css/styles.css' %}" rel="stylesheet">
+
+</head>
+<body>
+    <h1>Choose task</h1>
+    <form method="POST">
+        <div class="form-container">
+            <div class="form-left">
+                {% csrf_token %}
+                {{ form }}  
+                <div class="button" id="fetchDataBtn">Apply</div>
+            </div>
+            <div class="form-right">
+                <table id="dataTable">
+                    <thead>
+                       <tr>
+                        <th class="col1">TaskID</th>
+                        <th class="col2">Status</th>
+                        <th class="col3">Date</th>
+                       </tr> 
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        document.getElementById('fetchDataBtn').addEventListener('click', async function() {
+            var selectElement = document.getElementById("id_task_name");
+            var param = selectElement.value;
+            fetch(`/celery_explorer/tasks_list_by_name?name=${param}`)
+                .then(response => {
+                    if (!response.ok) { // Проверка на наличие ошибок
+                        throw new Error('Сеть отвечает неудачей');
+                    }
+                    return response.json(); // Преобразование данных в JSON
+                })
+                .then(data => {
+                    const tbody = document.querySelector('#dataTable tbody');
+                    tbody.innerHTML = ''; // Очистка предыдущих данных
+    
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="col1">${item.task}</td>
+                            <td class="col2">${item.signature}</td>
+                            <td class="col3">${item.description}</td>
+                        `;
+                        tbody.appendChild(row); // Добавление строки в таблицу
+                    });
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                });
+        });
+    </script>
+</body>
+</html>

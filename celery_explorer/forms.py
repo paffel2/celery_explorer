@@ -12,7 +12,10 @@ def get_task_list():
     return zip(result, result)
 
 
-class TaskForm(forms.Form):
+class TaskNameForm(forms.Form):
     task_name = forms.ChoiceField(choices=get_task_list(), initial="------")
+
+
+class TaskForm(TaskNameForm):
     countdown = forms.IntegerField(required=False, initial=0)
     params = forms.CharField(required=False)
