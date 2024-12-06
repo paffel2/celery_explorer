@@ -1,0 +1,2 @@
+recursive-include celery_explorer/static *
+recursive-include celery_explorer/templates *
