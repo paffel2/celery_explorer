@@ -5,7 +5,7 @@ from django.views.decorators.http import require_GET
 import inspect
 from itertools import zip_longest
 import celery.result
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, HttpResponseNotFound
 
 
 @require_GET
@@ -18,7 +18,7 @@ def get_task_detail(request, *args, **kwargs):
             description = inspect.getdoc(task)
             return JsonResponse({"task": name, "signature": signature, "description": description})
 
-    return Http404()
+    return HttpResponseNotFound()
 
 
 @require_GET
