@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "celery_explorer"
-version = "0.2.1"
+version = "0.2.3"
 dependencies = [
     "django>=3.1","celery>=4.0"  # Replace "X.Y" as appropriate
 ]
@@ -32,4 +32,4 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://www.example.com/"
+Homepage = "https://github.com/paffel2/celery_explorer"
