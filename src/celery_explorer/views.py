@@ -36,11 +36,12 @@ def check_task_status(request, *args, **kwargs):
         if isinstance(result, Exception):
             result = f"{type(result).__name__}({str(result)})"
         result_dict = {
+            "task_id": task_id,
             "task_name": async_result.name,
             "status": async_result.state,
             "queue": async_result.queue,
             "result": result,
-            "date_done": async_result.date_done,
+            "date_done": async_result.date_done.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "traceback": async_result.traceback,
             "args": async_result.args,
             "kwargs": async_result.kwargs,
@@ -52,16 +53,20 @@ def check_task_status(request, *args, **kwargs):
             if received:
                 result_dict["received"] = datetime.strptime(
                     received.decode("UTF-8"), "%Y-%m-%dT%H:%M:%S.%fZ"
-                )
+                ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             if started:
                 started_datetime = datetime.strptime(
                     started.decode("UTF-8"), "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
-                result_dict["started"] = started_datetime
+                result_dict["started"] = started_datetime.strftime(
+                    "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
                 result_dict["runtime"] = (
                     f"{async_result.date_done.timestamp() - started_datetime.timestamp()}s"
                 )
-        return JsonResponse({"result": result_dict})
+        return render(
+            request, "task_info.html", result_dict
+        )  # JsonResponse({"result": result_dict})
     else:
         return JsonResponse({"error": "task not founded"}, status=400)
 

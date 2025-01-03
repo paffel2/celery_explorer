@@ -21,7 +21,13 @@
                 <div class="form-container"><label>Status:</label>
                 <div id="status">{{status}}</div></div>
                 <div class="form-container"><label>TaskID:</label>
-                <div id="task_id">{{task_id}}</div></div>
+                <div id="task_id">
+                {% if task_id %}
+                    <a href="{% url 'check_task_status'%}?task_id={{task_id}}" id="task_id">{{task_id}}</a>
+                {% else %}
+                   {{task_id}}
+                {% endif %}
+                </div></div>
                 <div class="form-container"><label>Error:</label>
                 <div id="error">{{error}}</div></div>
                 
