@@ -19,6 +19,12 @@ def test_task_with_default_args(a: int = 0, b: str = "string"):
     print(f"{a} + {b}")
 
 
+@shared_task
+def error_test_task():
+    """error task description"""
+    raise Exception("error")
+
+
 def start_task(self, request, *args, **kwargs):
     task_id = test_task.apply_async()
     print(f"{task_id=}")

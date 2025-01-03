@@ -1,6 +1,9 @@
 import celery
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
+from django.utils import timezone
+from datetime import datetime
+
 
 import inspect
 from itertools import zip_longest
@@ -14,9 +17,11 @@ def get_task_detail(request, *args, **kwargs):
     if name:
         task = celery.current_app.tasks.get(name)
         if task:
-            signature = str(inspect.signature(task))[1:-1]  # delete brackets
+            signature = str(inspect.signature(task))[1:-1]
             description = inspect.getdoc(task)
-            return JsonResponse({"task": name, "signature": signature, "description": description})
+            return JsonResponse(
+                {"task": name, "signature": signature, "description": description}
+            )
 
     return HttpResponseNotFound()
 
@@ -25,8 +30,38 @@ def get_task_detail(request, *args, **kwargs):
 def check_task_status(request, *args, **kwargs):
     task_id = request.GET.get("task_id")
     if task_id:
-        res = celery.result.AsyncResult(task_id).state
-        return JsonResponse({"result": res})
+        async_result = celery.result.AsyncResult(task_id)
+        print(type(async_result.result))
+        result = async_result.result
+        if isinstance(result, Exception):
+            result = f"{type(result).__name__}({str(result)})"
+        result_dict = {
+            "task_name": async_result.name,
+            "status": async_result.state,
+            "queue": async_result.queue,
+            "result": result,
+            "date_done": async_result.date_done,
+            "traceback": async_result.traceback,
+            "args": async_result.args,
+            "kwargs": async_result.kwargs,
+        }
+        back = celery.current_app.backend
+        if back:
+            received = back.get(f"celery-task-received-timestamp-{task_id}")
+            started = back.get(f"celery-task-started-timestamp-{task_id}")
+            if received:
+                result_dict["received"] = datetime.strptime(
+                    received.decode("UTF-8"), "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+            if started:
+                started_datetime = datetime.strptime(
+                    started.decode("UTF-8"), "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+                result_dict["started"] = started_datetime
+                result_dict["runtime"] = (
+                    f"{async_result.date_done.timestamp() - started_datetime.timestamp()}s"
+                )
+        return JsonResponse({"result": result_dict})
     else:
         return JsonResponse({"error": "task not founded"}, status=400)
 
@@ -63,6 +98,11 @@ def task_index(request):
                     task_id = str(task.apply_async(countdown=countdown))
                     status = "STARTED"
                     error = False
+                    back = celery.current_app.backend
+                    if back:
+                        print(back)
+                        now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                        back.set(f"celery-task-received-timestamp-{task_id}", now)
                 elif signature_params:
                     params = []
                     list_of_params = args.split(",") if args else []
@@ -72,7 +112,9 @@ def task_index(request):
                         context["error"] = True
                         return render(request, template_path, context=context)
 
-                    for str_param, param in zip_longest(list_of_params, signature_params.values()):
+                    for str_param, param in zip_longest(
+                        list_of_params, signature_params.values()
+                    ):
                         param_type = param.annotation
                         value = None
                         if str_param is None and param.default is not inspect._empty:
@@ -89,6 +131,11 @@ def task_index(request):
                     task_id = str(task.apply_async(params, countdown=countdown))
                     status = "STARTED"
                     error = False
+                    back = celery.current_app.backend
+                    if back:
+                        print(back)
+                        now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                        back.set(f"celery-task-received-timestamp-{task_id}", now)
                 else:
                     status = "WRONG PARAMETERS"
                 context["status"] = status
