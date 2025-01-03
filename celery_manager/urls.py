@@ -24,5 +24,4 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/task_maker/", include("task_creator.urls")),
     path("celery_explorer/", include("src.celery_explorer.urls")),
-    # path("celery_explorer/", task_index, name="explorer"),
 ]

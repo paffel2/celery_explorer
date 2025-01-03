@@ -37,9 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "task_creator",
     "clearcache",
-    "src.celery_explorer",
+    "task_creator",  # тестовое приложение, в котором описаны фоновые задачи
+    "src.celery_explorer",  # приложение для запуска фоновых задач
 ]
 
 MIDDLEWARE = [

@@ -41,7 +41,11 @@ def check_task_status(request, *args, **kwargs):
             "status": async_result.state,
             "queue": async_result.queue,
             "result": result,
-            "date_done": async_result.date_done.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "date_done": (
+                async_result.date_done.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                if async_result.date_done
+                else ""
+            ),
             "traceback": async_result.traceback,
             "args": async_result.args,
             "kwargs": async_result.kwargs,
