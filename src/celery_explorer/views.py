@@ -50,10 +50,10 @@ def check_task_status(request, *args, **kwargs):
             "args": async_result.args,
             "kwargs": async_result.kwargs,
         }
-        back = celery.current_app.backend
-        if back:
-            received = back.get(f"celery-task-received-timestamp-{task_id}")
-            started = back.get(f"celery-task-started-timestamp-{task_id}")
+        backend = celery.current_app.backend
+        if backend:
+            received = backend.get(f"celery-task-received-timestamp-{task_id}")
+            started = backend.get(f"celery-task-started-timestamp-{task_id}")
             if received:
                 result_dict["received"] = datetime.strptime(
                     received.decode("UTF-8"), "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -109,9 +109,9 @@ def task_index(request):
                     error = False
                     back = celery.current_app.backend
                     if back:
-                        print(back)
                         now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                        back.set(f"celery-task-received-timestamp-{task_id}", now)
+                        backend.set(f"celery-task-received-timestamp-{task_id}", now)
+                        backend.client.rpush("celery-task-history", task_id)
                 elif signature_params:
                     params = []
                     list_of_params = args.split(",") if args else []
@@ -140,11 +140,11 @@ def task_index(request):
                     task_id = str(task.apply_async(params, countdown=countdown))
                     status = "STARTED"
                     error = False
-                    back = celery.current_app.backend
-                    if back:
-                        print(back)
+                    backend = celery.current_app.backend
+                    if backend:
                         now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                        back.set(f"celery-task-received-timestamp-{task_id}", now)
+                        backend.set(f"celery-task-received-timestamp-{task_id}", now)
+                        backend.client.rpush("celery-task-history", task_id)
                 else:
                     status = "WRONG PARAMETERS"
                 context["status"] = status
@@ -156,3 +156,27 @@ def task_index(request):
                 context["task_id"] = None
                 context["error"] = True
                 return render(request, template_path, context=context)
+
+
+def get_tasks_list(request):
+    page_param = request.GET.get("page")
+    page = 0
+    page_size = 10
+    start = 0
+    end = page_size - 1
+    if page_param and page_param.is_digit():
+        page = int(page_param)
+        start = (page - 1) * page_size
+        end = page * page_size - 1
+    backend = celery.current_app.backend.client
+    task_list = [
+        task_id.decode("UTF-8")
+        for task_id in backend.lrange("celery-task-history", start, end)
+    ]
+    num_of_tasks = backend.llen("celery-task-history")
+
+    num_of_pages = num_of_tasks // page_size + 1
+
+    return JsonResponse(
+        {"task_list": task_list, "num_of_pages": num_of_pages}, status=200
+    )
