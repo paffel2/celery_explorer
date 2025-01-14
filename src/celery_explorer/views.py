@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.utils import timezone
 from datetime import datetime
+import json
 
 
 import inspect
@@ -107,8 +108,8 @@ def task_index(request):
                     task_id = str(task.apply_async(countdown=countdown))
                     status = "STARTED"
                     error = False
-                    back = celery.current_app.backend
-                    if back:
+                    backend = celery.current_app.backend
+                    if backend:
                         now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                         backend.set(f"celery-task-received-timestamp-{task_id}", now)
                         backend.client.rpush("celery-task-history", task_id)
@@ -169,14 +170,25 @@ def get_tasks_list(request):
         start = (page - 1) * page_size
         end = page * page_size - 1
     backend = celery.current_app.backend.client
-    task_list = [
+    task_ids_list = [
         task_id.decode("UTF-8")
         for task_id in backend.lrange("celery-task-history", start, end)
     ]
+    meta_task_ids_list = [f"celery-task-meta-{task_id}" for task_id in task_ids_list]
     num_of_tasks = backend.llen("celery-task-history")
 
     num_of_pages = num_of_tasks // page_size + 1
 
+    values = backend.mget(keys=meta_task_ids_list)
+    tasks_list = []
+    for task_id, value in zip(task_ids_list, values):
+        if value is not None:
+            dict_value = json.loads(value)
+            tasks_list.append({"task_id": task_id, "status": dict_value["status"]})
+        else:
+            tasks_list.append({"task_id": task_id, "status": "PENDING"})
+
     return JsonResponse(
-        {"task_list": task_list, "num_of_pages": num_of_pages}, status=200
+        {"tasks_list": tasks_list, "num_of_pages": num_of_pages},
+        status=200,
     )
