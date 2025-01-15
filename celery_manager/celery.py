@@ -1,7 +1,7 @@
 import os
 
 from celery import Celery
-from src.celery_explorer.signals import save_task_received_timestamp
+from src.celery_explorer.signals import save_task_received_timestamp, save_tasks_history
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "celery_manager.settings")
 

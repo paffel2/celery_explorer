@@ -108,11 +108,6 @@ def task_index(request):
                     task_id = str(task.apply_async(countdown=countdown))
                     status = "STARTED"
                     error = False
-                    backend = celery.current_app.backend
-                    if backend:
-                        now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                        backend.set(f"celery-task-received-timestamp-{task_id}", now)
-                        backend.client.rpush("celery-task-history", task_id)
                 elif signature_params:
                     params = []
                     list_of_params = args.split(",") if args else []
@@ -141,11 +136,6 @@ def task_index(request):
                     task_id = str(task.apply_async(params, countdown=countdown))
                     status = "STARTED"
                     error = False
-                    backend = celery.current_app.backend
-                    if backend:
-                        now = timezone.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                        backend.set(f"celery-task-received-timestamp-{task_id}", now)
-                        backend.client.rpush("celery-task-history", task_id)
                 else:
                     status = "WRONG PARAMETERS"
                 context["status"] = status
@@ -165,7 +155,7 @@ def get_tasks_list(request):
     page_size = 10
     start = 0
     end = page_size - 1
-    if page_param and page_param.is_digit():
+    if page_param and page_param.isdigit():
         page = int(page_param)
         start = (page - 1) * page_size
         end = page * page_size - 1
@@ -181,14 +171,13 @@ def get_tasks_list(request):
 
     values = backend.mget(keys=meta_task_ids_list)
     tasks_list = []
-    for task_id, value in zip(task_ids_list, values):
-        if value is not None:
-            dict_value = json.loads(value)
-            tasks_list.append({"task_id": task_id, "status": dict_value["status"]})
-        else:
-            tasks_list.append({"task_id": task_id, "status": "PENDING"})
+    for value in values:
+        dict_value = json.loads(value)
+        tasks_list.append(
+            {"task_id": dict_value["task_id"], "status": dict_value["status"]}
+        )
 
     return JsonResponse(
-        {"tasks_list": tasks_list, "num_of_pages": num_of_pages},
+        {"tasks_list": tasks_list, "num_of_pages": num_of_pages, "current_page": page},
         status=200,
     )
