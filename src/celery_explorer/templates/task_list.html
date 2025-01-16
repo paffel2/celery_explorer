@@ -1,46 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task manager</title>
+    <title>Tasks List</title>
     {% load static %}
+    {% load get %}
     <link href="{% static 'explorer_static/css/styles.css' %}" rel="stylesheet">
 
 </head>
-<body>
-    <h1>Choose task</h1>
-    <form method="POST">
-        <div class="form-container">
-            <div class="form-left">
-                {% csrf_token %}
-                {{ form }} 
-                <input type="submit" value="Submit">
-                <div class="form-container"><label>Task Name:</label>
-                <div id="task_name">{{task_name}}</div></div>
-                <div class="form-container"><label>Status:</label>
-                <div id="status">{{status}}</div></div>
-                <div class="form-container"><label>TaskID:</label>
-                <div id="task_id">
-                {% if task_id %}
-                    <a href="{% url 'check_task_status'%}?task_id={{task_id}}" id="task_id">{{task_id}}</a>
-                {% else %}
-                   {{task_id}}
-                {% endif %}
-                </div></div>
-                <div class="form-container"><label>Error:</label>
-                <div id="error">{{error}}</div></div>
-                
-            </div>
-            <div class="form-right">
-                <label>Description:</label>
-                <textarea name="description" cols="100" rows="20" id="description" readonly></textarea>
-                <label>Signature:</label>
-                <textarea name="signature" cols="100" rows="20" id="signature" readonly></textarea>
-            </div>
-        </div>
-    </form>
 
-    <script src="{% static 'explorer_static/js/scripts.js' %}"></script>
+<body>
+    <h1>Tasks List</h1>
+    <div class="form-container">
+        <div class="form-left">
+            <table>
+                <thead>
+                    <tr>
+                        <th>TaskName</th>
+                        <th>Status</th>
+                        <th>TaskID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in "0123456789" %}
+                    {% if forloop.counter0 < tasks_list|length %} {% with tasks_list|get:forloop.counter0 as task %}
+                        <tr>
+                        <td>{{ task.task_name }}</td>
+                        <td>{{ task.status }}</td>
+                        <td><a href="{% url 'check_task_status'%}?task_id={{task.task_id}}"
+                                id="task_id">{{task.task_id}}</a></td>
+                        </tr>
+                        {% endwith %}
+                        {% else %}
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <div class="pagination" style="display: flex;  margin-left: 10px;">
+                <input type="number" class="page-input" id="page-input" min="1" max="{{ num_of_pages }}"
+                    value="{{ current_page }}" />
+                <button onclick="goToPage()" class="btn go-to-page">Go to page</button>
+            </div>
+            <br>
+            <div class="form-container">
+                <a href="{% url 'task_explorer' %}" class="btn">Back to explorer</a>
+            </div>
+            <script src="{% static 'explorer_static/js/pagination.js' %}"></script>
+        </div>
+    </div>
 </body>
+
 </html>

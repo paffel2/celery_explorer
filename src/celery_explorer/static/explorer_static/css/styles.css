@@ -58,3 +58,31 @@ textarea {
     cursor: pointer;
     text-decoration: none;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    height: 25px;
+}
+th {
+    background-color: #f2f2f2;
+}
+
+.page-input, .go-to-page{
+    margin-right: 10px;
+    padding-right: 10px;
+    width: 200px;
+    height: 45px;
+}
+
+
+
+.pagination {
+    width: 200px; 
+    margin-left: 10px;
+}

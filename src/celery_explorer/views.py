@@ -1,4 +1,5 @@
 import celery
+from django import template
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.utils import timezone
@@ -32,8 +33,7 @@ def check_task_status(request, *args, **kwargs):
     task_id = request.GET.get("task_id")
     if task_id:
         async_result = celery.result.AsyncResult(task_id)
-        print(type(async_result.result))
-        result = async_result.result
+        result = async_result._get_task_meta().get("result")
         if isinstance(result, Exception):
             result = f"{type(result).__name__}({str(result)})"
         result_dict = {
@@ -45,7 +45,7 @@ def check_task_status(request, *args, **kwargs):
             "date_done": (
                 async_result.date_done.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 if async_result.date_done
-                else ""
+                else None
             ),
             "traceback": async_result.traceback,
             "args": async_result.args,
@@ -79,7 +79,7 @@ def check_task_status(request, *args, **kwargs):
 def task_index(request):
     from celery_explorer.forms import TaskForm
 
-    template_path = "task_list.html"
+    template_path = "task_explorer.html"
 
     if request.method == "GET":
         form = TaskForm()
@@ -151,7 +151,7 @@ def task_index(request):
 
 def get_tasks_list(request):
     page_param = request.GET.get("page")
-    page = 0
+    page = 1
     page_size = 10
     start = 0
     end = page_size - 1
@@ -172,12 +172,21 @@ def get_tasks_list(request):
     values = backend.mget(keys=meta_task_ids_list)
     tasks_list = []
     for value in values:
-        dict_value = json.loads(value)
-        tasks_list.append(
-            {"task_id": dict_value["task_id"], "status": dict_value["status"]}
-        )
+        if value:
+            dict_value = json.loads(value)
+            tasks_list.append(
+                {
+                    "task_name": dict_value["name"],
+                    "task_id": dict_value["task_id"],
+                    "status": dict_value["status"],
+                }
+            )
 
-    return JsonResponse(
-        {"tasks_list": tasks_list, "num_of_pages": num_of_pages, "current_page": page},
-        status=200,
-    )
+    context = {
+        "tasks_list": tasks_list,
+        "num_of_pages": num_of_pages,
+        "current_page": page,
+    }
+    print(context)
+    template_path = "task_list.html"
+    return render(request, template_path, context=context)
