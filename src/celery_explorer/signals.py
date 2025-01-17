@@ -17,8 +17,6 @@ def save_task_received_timestamp(sender=None, **kwargs):
 def save_tasks_history(sender=None, headers=None, body=None, **kwargs):
     info = headers if "task" in headers else body
     info_dict = {"status": "PENDING", "task_id": info["id"], "name": info["task"]}
-    print(headers)
-    print(body)
     backend = celery.current_app.backend
     if backend:
         backend.set(f"celery-task-meta-{info_dict['task_id']}", json.dumps(info_dict))

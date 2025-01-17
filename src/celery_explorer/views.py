@@ -149,6 +149,7 @@ def task_index(request):
                 return render(request, template_path, context=context)
 
 
+@require_GET
 def get_tasks_list(request):
     page_param = request.GET.get("page")
     page = 1
@@ -187,6 +188,5 @@ def get_tasks_list(request):
         "num_of_pages": num_of_pages,
         "current_page": page,
     }
-    print(context)
     template_path = "task_list.html"
     return render(request, template_path, context=context)
