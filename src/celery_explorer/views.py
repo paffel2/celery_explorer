@@ -3,6 +3,7 @@ from django import template
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.utils import timezone
+from django.template.response import TemplateResponse
 from datetime import datetime
 import json
 
@@ -69,23 +70,31 @@ def check_task_status(request, *args, **kwargs):
                 result_dict["runtime"] = (
                     f"{async_result.date_done.timestamp() - started_datetime.timestamp()}s"
                 )
-        return render(
-            request, "task_info.html", result_dict
-        )  # JsonResponse({"result": result_dict})
+        return TemplateResponse(
+            request=request, template="task_info.html", context=result_dict
+        )
     else:
-        return JsonResponse({"error": "task not founded"}, status=400)
+        return TemplateResponse(
+            request=request,
+            context={"error": "task not founded"},
+            template="task_info.html",
+        )
 
 
 def task_index(request):
     from celery_explorer.forms import TaskForm
 
     template_path = "task_explorer.html"
-
+    error = False
+    status = ""
+    task_id = None
     if request.method == "GET":
         form = TaskForm()
         context = {}
         context["form"] = form
-        return render(request, template_path, context=context)
+        return TemplateResponse(
+            request=request, template=template_path, context=context
+        )
 
     elif request.method == "POST":
         form = TaskForm(request.POST)
@@ -112,41 +121,45 @@ def task_index(request):
                     params = []
                     list_of_params = args.split(",") if args else []
                     if len(list_of_params) > len(signature_params):
-                        context["status"] = "too much parameters"
-                        context["task_id"] = None
-                        context["error"] = True
-                        return render(request, template_path, context=context)
-
-                    for str_param, param in zip_longest(
-                        list_of_params, signature_params.values()
-                    ):
-                        param_type = param.annotation
-                        value = None
-                        if str_param is None and param.default is not inspect._empty:
-                            value = param.default
-                        else:
-                            try:
-                                value = param_type(str_param)
-                            except (TypeError, ValueError):
-                                context["status"] = f"bad type of {param.name}"
-                                context["task_id"] = None
-                                context["error"] = True
-                                return render(request, template_path, context=context)
-                        params.append(value)
-                    task_id = str(task.apply_async(params, countdown=countdown))
-                    status = "STARTED"
-                    error = False
+                        status = "too much parameters"
+                        task_id = None
+                        error = True
+                    else:
+                        error = False
+                        for str_param, param in zip_longest(
+                            list_of_params, signature_params.values()
+                        ):
+                            param_type = param.annotation
+                            value = None
+                            if (
+                                str_param is None
+                                and param.default is not inspect._empty
+                            ):
+                                value = param.default
+                            else:
+                                try:
+                                    value = param_type(str_param)
+                                    params.append(value)
+                                except (TypeError, ValueError):
+                                    status = f"bad type of {param.name}"
+                                    task_id = None
+                                    error = True
+                                    break
+                    if not error:
+                        task_id = str(task.apply_async(params, countdown=countdown))
+                        status = "STARTED"
                 else:
                     status = "WRONG PARAMETERS"
-                context["status"] = status
-                context["task_id"] = task_id
-                context["error"] = error
-                return render(request, template_path, context=context)
+                    task_id = None
+                    error = True
             else:
-                context["status"] = "TASK NOT FOUND"
-                context["task_id"] = None
-                context["error"] = True
-                return render(request, template_path, context=context)
+                status = "TASK NOT FOUND"
+                task_id = None
+                error = True
+    context["status"] = status
+    context["task_id"] = task_id
+    context["error"] = error
+    return TemplateResponse(request=request, template=template_path, context=context)
 
 
 @require_GET
@@ -168,7 +181,7 @@ def get_tasks_list(request):
     meta_task_ids_list = [f"celery-task-meta-{task_id}" for task_id in task_ids_list]
     num_of_tasks = backend.llen("celery-task-history")
 
-    num_of_pages = num_of_tasks // page_size + 1
+    num_of_pages = (num_of_tasks // page_size) + 1
 
     values = backend.mget(keys=meta_task_ids_list)
     tasks_list = []
@@ -189,4 +202,4 @@ def get_tasks_list(request):
         "current_page": page,
     }
     template_path = "task_list.html"
-    return render(request, template_path, context=context)
+    return TemplateResponse(request=request, template=template_path, context=context)

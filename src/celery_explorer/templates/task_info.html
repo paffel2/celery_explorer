@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,44 +9,65 @@
     <link href="{% static 'explorer_static/css/styles.css' %}" rel="stylesheet">
 
 </head>
+
 <body>
+    {% if not error %}
     <h1>Task {{task_id}}</h1>
-        <div class="form-container">
-            <div class="form-left">
-                <div class="form-container"><label>Task Name:</label>
-                <div id="task_name">{{task_name}}</div></div>
-                <div class="form-container"><label>Status:</label>
-                <div id="status">{{status}}</div></div>
-                <div class="form-container"><label>Queue:</label>
-                <div id="queue">{{queue}}</div></div>
-                <div class="form-container"><label>Date done:</label>
-                <div id="date_done">{{date_done}}</div></div>
-                <div class="form-container"><label>Received:</label>
-                <div id="received">{{received}}</div></div>
-                <div class="form-container"><label>Started:</label>
-                <div id="started">{{started}}</div></div>
-                <div class="form-container"><label>Runtime:</label>
-                <div id="runtime">{{runtime}}</div></div>
-                <br>
-                <div class="form-container">
-                <a href="{% url 'task_explorer' %}" class="btn">Back to explorer</a>
-                </div>
-                <br>
-                <div class="form-container">
-                    <a href="{% url 'tasks_list' %}" class="btn">Back to tasks list</a>
-                </div>
+    <div class="form-container">
+        <div class="form-left">
+            <div class="form-container"><label>Task Name:</label>
+                <div id="task_name">{{task_name}}</div>
             </div>
-            <div class="form-right">
-                <label>Traceback:</label>
-                <textarea name="traceback" cols="100" rows="20" id="description" readonly>{{traceback}}</textarea>
-                <label>Result:</label>
-                <textarea name="result" cols="100" rows="20" id="signature" readonly>{{result}}</textarea>
-                <label>Args:</label>
-                <textarea name="args" cols="100" rows="20" id="signature" readonly>{{args}}</textarea>
-                <label>Kwargs:</label>
-                <textarea name="kwargs" cols="100" rows="20" id="signature" readonly>{{kwargs}}</textarea>
+            <div class="form-container"><label>Status:</label>
+                <div id="status">{{status}}</div>
+            </div>
+            <div class="form-container"><label>Queue:</label>
+                <div id="queue">{{queue}}</div>
+            </div>
+            <div class="form-container"><label>Date done:</label>
+                <div id="date_done">{{date_done}}</div>
+            </div>
+            <div class="form-container"><label>Received:</label>
+                <div id="received">{{received}}</div>
+            </div>
+            <div class="form-container"><label>Started:</label>
+                <div id="started">{{started}}</div>
+            </div>
+            <div class="form-container"><label>Runtime:</label>
+                <div id="runtime">{{runtime}}</div>
+            </div>
+            <br>
+            <div class="form-container">
+                <a href="{% url 'task_explorer' %}" class="btn">Back to explorer</a>
+            </div>
+            <br>
+            <div class="form-container">
+                <a href="{% url 'tasks_list' %}" class="btn">Back to tasks list</a>
             </div>
         </div>
-
+        <div class="form-right">
+            <label>Traceback:</label>
+            <textarea name="traceback" cols="100" rows="20" id="description" readonly>{{traceback}}</textarea>
+            <label>Result:</label>
+            <textarea name="result" cols="100" rows="20" id="signature" readonly>{{result}}</textarea>
+            <label>Args:</label>
+            <textarea name="args" cols="100" rows="20" id="signature" readonly>{{args}}</textarea>
+            <label>Kwargs:</label>
+            <textarea name="kwargs" cols="100" rows="20" id="signature" readonly>{{kwargs}}</textarea>
+        </div>
+    </div>
+    {% else %}
+    <h1>Task not found</h1>
+    <div class="form-left">
+        <div class="form-container">
+            <a href="{% url 'task_explorer' %}" class="btn">Back to explorer</a>
+        </div>
+        <br>
+        <div class="form-container">
+            <a href="{% url 'tasks_list' %}" class="btn">Back to tasks list</a>
+        </div>
+    </div>
+    {% endif %}
 </body>
+
 </html>
